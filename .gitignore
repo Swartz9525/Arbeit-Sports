@@ -33,3 +33,7 @@ pnpm-debug.log*
 *.sw?
 .DS_Store
 Thumbs.db
+
+# Project Uploads
+server/uploads/
+
