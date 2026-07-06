@@ -1,2 +1,2 @@
-export const BACKEND_URL = 'http://localhost:5000';
+export const BACKEND_URL = 'https://arbeit-sports-tutt.vercel.app';
 export const API_URL = `${BACKEND_URL}/api`;
