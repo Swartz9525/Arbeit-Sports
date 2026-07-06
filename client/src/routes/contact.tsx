@@ -10,7 +10,7 @@ function Contact() {
   const [message, setMessage] = useState('');
   const [isPending, setIsPending] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !subject || !message) {
       alert('Please fill out all fields.');
@@ -18,15 +18,40 @@ function Contact() {
     }
 
     setIsPending(true);
-    // Simulate API Submission
-    setTimeout(() => {
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+        },
+        body: JSON.stringify({
+          access_key: '5f76f315-c0ee-4291-a7cf-5851baddc026',
+          name,
+          email,
+          subject,
+          message,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        alert('Message sent successfully! Our sports tech advisory team will reach out shortly.');
+        setName('');
+        setEmail('');
+        setSubject('');
+        setMessage('');
+      } else {
+        alert(result.message || 'Something went wrong. Please try again.');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      alert('Failed to connect to the mail server. Please try again later.');
+    } finally {
       setIsPending(false);
-      setName('');
-      setEmail('');
-      setSubject('');
-      setMessage('');
-      alert('Message sent successfully! Our sports tech advisory team will reach out shortly.');
-    }, 1500);
+    }
   };
 
   return (
