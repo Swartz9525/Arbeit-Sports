@@ -1,0 +1,25 @@
+{
+  "builds": [
+    {
+      "src": "client/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "http://localhost:5000/api/$1"
+    },
+    {
+      "src": "/uploads/(.*)",
+      "dest": "http://localhost:5000/uploads/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "client/$1"
+    }
+  ]
+}
