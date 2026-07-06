@@ -29,8 +29,11 @@ app.use(helmet({
   contentSecurityPolicy: false, // For ease of loading external models/images in dev
 }));
 
+const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+const sanitizedOrigin = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : frontendUrl;
+
 const corsOptions = {
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
+  origin: sanitizedOrigin,
   credentials: true,
 };
 app.use(cors(corsOptions));
