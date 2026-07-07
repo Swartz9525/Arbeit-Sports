@@ -8,8 +8,8 @@ import { AuthRequest } from '../middlewares/auth';
 const setTokenCookies = (res: Response, accessToken: string, refreshToken: string, rememberMe = false) => {
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     maxAge: 15 * 60 * 1000, // 15 mins
   });
 
@@ -19,8 +19,8 @@ const setTokenCookies = (res: Response, accessToken: string, refreshToken: strin
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
+    secure: true,
+    sameSite: 'none',
     maxAge: refreshAge,
   });
 };

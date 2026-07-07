@@ -30,8 +30,8 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
           // Set new access token cookie
           res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 15 * 60 * 1000, // 15 mins
           });
 
@@ -64,8 +64,8 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
           const newAccessToken = generateAccessToken(user._id.toString(), user.role);
           res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'strict',
+            secure: true,
+            sameSite: 'none',
             maxAge: 15 * 60 * 1000,
           });
           req.user = user;
