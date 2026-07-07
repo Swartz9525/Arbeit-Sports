@@ -956,8 +956,8 @@ function AdminDashboard() {
             return oUserId === selectedUserId;
           }) || [];
 
-          const uniqueAddresses = Array.from(
-            new Set(
+          const uniqueAddresses: string[] = Array.from(
+            new Set<string>(
               userOrders
                 .filter((o: any) => o.shippingAddress)
                 .map((o: any) => 
