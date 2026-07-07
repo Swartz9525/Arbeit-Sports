@@ -1,12 +1,14 @@
+import { useState } from 'react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { useSelector, useDispatch } from 'react-redux';
 import { RootState } from '../store';
 import { logoutSuccess } from '../features/auth/store/authSlice';
 import { clearCart } from '../features/cart/store/cartSlice';
 import api from '../services/api';
-import { ShoppingCart, User, LogOut, LayoutDashboard, Dumbbell } from 'lucide-react';
+import { ShoppingCart, User, LogOut, LayoutDashboard, Dumbbell, Menu, X } from 'lucide-react';
 
 export default function Navbar() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const { isAuthenticated, user } = useSelector((state: RootState) => state.auth);
   const cartItems = useSelector((state: RootState) => state.cart.items);
   const dispatch = useDispatch();
@@ -17,18 +19,19 @@ export default function Navbar() {
       await api.post('/auth/logout');
       dispatch(logoutSuccess());
       dispatch(clearCart());
-      navigate({ to: '/login' });
+      navigate({ to: '/logged-out' });
     } catch (error) {
       console.error('Logout error:', error);
       dispatch(logoutSuccess());
       dispatch(clearCart());
+      navigate({ to: '/logged-out' });
     }
   };
 
   const totalCartQty = cartItems.reduce((acc, item) => acc + item.qty, 0);
 
   return (
-    <nav className="sticky top-0 z-50 w-full glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center transition-all">
+    <nav className="relative sticky top-0 z-50 w-full glass-panel border-b border-white/5 py-4 px-6 md:px-12 flex justify-between items-center transition-all">
       {/* Brand Logo */}
       <Link to="/" className="flex items-center gap-2 group">
         <Dumbbell className="w-8 h-8 text-violet-500 transition-transform group-hover:rotate-45" />
@@ -95,7 +98,39 @@ export default function Navbar() {
             SIGN IN
           </Link>
         )}
+
+        {/* Mobile Menu Toggle Button */}
+        <button
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          className="md:hidden p-2 hover:bg-white/5 rounded-lg text-zinc-300 hover:text-white transition-colors"
+          title="Toggle Menu"
+        >
+          {isMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+        </button>
       </div>
+
+      {/* Mobile Dropdown Menu */}
+      {isMenuOpen && (
+        <div className="absolute top-full left-0 w-full bg-[#0b0b0f]/95 backdrop-blur-md border-b border-white/5 py-4 px-6 flex flex-col gap-4 text-sm font-semibold tracking-wide text-zinc-300 md:hidden z-50">
+          <Link to="/" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors py-2 border-b border-white/5 [&.active]:text-violet-400">
+            HOME
+          </Link>
+          <Link to="/shop" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors py-2 border-b border-white/5 [&.active]:text-violet-400">
+            SHOP
+          </Link>
+          <Link to="/about" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors py-2 border-b border-white/5 [&.active]:text-violet-400">
+            ABOUT
+          </Link>
+          <Link to="/contact" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors py-2 border-b border-white/5 [&.active]:text-violet-400">
+            CONTACT
+          </Link>
+          {isAuthenticated && (
+            <Link to="/orders" onClick={() => setIsMenuOpen(false)} className="hover:text-white transition-colors py-2 [&.active]:text-violet-400">
+              MY ORDERS
+            </Link>
+          )}
+        </div>
+      )}
     </nav>
   );
 }

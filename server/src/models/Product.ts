@@ -72,5 +72,13 @@ const productSchema = new Schema(
   }
 );
 
+// Indexes to optimize querying, filtering and sorting performance
+productSchema.index({ category: 1 });
+productSchema.index({ brand: 1 });
+productSchema.index({ price: 1 });
+productSchema.index({ rating: -1 });
+productSchema.index({ createdAt: -1 });
+productSchema.index({ name: 'text', description: 'text' });
+
 export const Product = mongoose.model('Product', productSchema);
 export const Review = mongoose.model('Review', reviewSchema);

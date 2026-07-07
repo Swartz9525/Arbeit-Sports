@@ -95,6 +95,10 @@ export const updateOrderStatus = async (req: AuthRequest, res: Response) => {
     if (status === 'Delivered') {
       order.isDelivered = true;
       order.deliveredAt = new Date();
+      if (!order.isPaid) {
+        order.isPaid = true;
+        order.paidAt = new Date();
+      }
     }
 
     const updatedOrder = await order.save();

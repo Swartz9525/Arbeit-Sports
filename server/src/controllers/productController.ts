@@ -53,7 +53,8 @@ export const getProducts = async (req: Request, res: Response) => {
     const products = await Product.find(query)
       .sort(sortBy)
       .limit(limitNumber)
-      .skip(skip);
+      .skip(skip)
+      .lean();
 
     const total = await Product.countDocuments(query);
 
@@ -70,7 +71,7 @@ export const getProducts = async (req: Request, res: Response) => {
 
 export const getProductById = async (req: Request, res: Response) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).lean();
     if (!product) {
       return res.status(404).json({ message: 'Product not found' });
     }
@@ -180,12 +181,12 @@ export const createProductReview = async (req: AuthRequest, res: Response) => {
 
 export const getRelatedProducts = async (req: Request, res: Response) => {
   try {
-    const product = await Product.findById(req.params.id);
+    const product = await Product.findById(req.params.id).lean();
     if (!product) return res.status(404).json({ message: 'Product not found' });
     const related = await Product.find({
       category: product.category,
       _id: { $ne: product._id },
-    }).limit(4);
+    }).limit(4).lean();
     res.json(related);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -194,7 +195,7 @@ export const getRelatedProducts = async (req: Request, res: Response) => {
 
 export const getTrendingProducts = async (req: Request, res: Response) => {
   try {
-    const trending = await Product.find({}).sort({ rating: -1, numReviews: -1 }).limit(4);
+    const trending = await Product.find({}).sort({ rating: -1, numReviews: -1 }).limit(4).lean();
     res.json(trending);
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -203,7 +204,7 @@ export const getTrendingProducts = async (req: Request, res: Response) => {
 
 export const getNewArrivals = async (req: Request, res: Response) => {
   try {
-    const newArrivals = await Product.find({}).sort({ createdAt: -1 }).limit(4);
+    const newArrivals = await Product.find({}).sort({ createdAt: -1 }).limit(4).lean();
     res.json(newArrivals);
   } catch (error: any) {
     res.status(500).json({ message: error.message });

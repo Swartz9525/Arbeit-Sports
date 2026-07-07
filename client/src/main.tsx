@@ -21,6 +21,7 @@ import { Route as trackRoute } from './routes/orders.track';
 import { Route as profileRoute } from './routes/profile';
 import { Route as aboutRoute } from './routes/about';
 import { Route as contactRoute } from './routes/contact';
+import { Route as loggedOutRoute } from './routes/logged-out';
 
 // Configure route tree
 const routeTree = rootRoute.addChildren([
@@ -37,6 +38,7 @@ const routeTree = rootRoute.addChildren([
   profileRoute,
   aboutRoute,
   contactRoute,
+  loggedOutRoute,
 ]);
 
 const router = createRouter({ routeTree });

@@ -33,6 +33,12 @@ interface Order {
   user: {
     name: string;
   };
+  shippingAddress: {
+    address: string;
+    city: string;
+    postalCode: string;
+    country: string;
+  };
   totalPrice: number;
   isPaid: boolean;
   status: string;
@@ -53,6 +59,8 @@ function AdminDashboard() {
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [uploadError, setUploadError] = useState('');
   const [activeTab, setActiveTab] = useState('overview');
+  const [orderSearch, setOrderSearch] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
   // Verify Role
   if (!isAuthenticated || user?.role !== 'admin') {
@@ -204,6 +212,139 @@ function AdminDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handlePrintInvoice = (o: any) => {
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('Pop-up blocker is active. Please allow pop-ups to print the bill.');
+      return;
+    }
+
+    const itemsHtml = o.orderItems.map((item: any) => `
+      <tr>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name} ${item.size ? `(${item.size})` : ''}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: center;">${item.qty}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">₹${item.price.toFixed(2)}</td>
+        <td style="padding: 10px; border-bottom: 1px solid #ddd; text-align: right;">₹${(item.qty * item.price).toFixed(2)}</td>
+      </tr>
+    `).join('');
+
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice - ${o._id}</title>
+          <style>
+            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; margin: 40px; line-height: 1.6; }
+            .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); border-radius: 8px; }
+            .header-table { width: 100%; margin-bottom: 30px; }
+            .header-table td { vertical-align: top; }
+            .title { font-size: 28px; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: -1px; }
+            .section-title { font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+            .details-table { width: 100%; margin-bottom: 30px; }
+            .details-table td { width: 50%; vertical-align: top; }
+            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+            .items-table th { background: #f9fafb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase; }
+            .total-table { width: 100%; text-align: right; font-weight: bold; font-size: 15px; margin-top: 20px; }
+            .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
+            .badge-paid { color: #065f46; background: #d1fae5; }
+            .badge-unpaid { color: #991b1b; background: #fee2e2; }
+          </style>
+        </head>
+        <body>
+          <div class="invoice-box">
+            <table class="header-table">
+              <tr>
+                <td>
+                  <div class="title">ARBEIT SPORTS</div>
+                  <small>Performance & Style Lab</small>
+                </td>
+                <td style="text-align: right; font-size: 13px;">
+                  <strong>INVOICE RECEIPT</strong><br />
+                  Order ID: ${o._id}<br />
+                  Date: ${new Date(o.createdAt).toLocaleDateString()}<br />
+                </td>
+              </tr>
+            </table>
+
+            <table class="details-table">
+              <tr>
+                <td>
+                  <div class="section-title">Shopkeeper / Seller</div>
+                  <strong>Arbeit Sports Retail Ltd.</strong><br />
+                  100 Athletic Boulevard, Suite 500<br />
+                  New Delhi, Delhi 110001<br />
+                  Email: billing@arbeitsports.com<br />
+                  GSTIN: 07AAACA1111A1Z1
+                </td>
+                <td>
+                  <div class="section-title">Customer Shipping Address</div>
+                  <strong>${o.user?.name || 'Customer'}</strong><br />
+                  Address: ${o.shippingAddress?.address}<br />
+                  City: ${o.shippingAddress?.city}, Pin: ${o.shippingAddress?.postalCode}<br />
+                  Country: ${o.shippingAddress?.country}
+                </td>
+              </tr>
+            </table>
+
+            <table class="details-table" style="margin-bottom: 20px;">
+              <tr>
+                <td>
+                  <div class="section-title">Payment Information</div>
+                  Method: ${o.paymentMethod || 'Card'}<br />
+                  Status: <span class="badge ${o.isPaid ? 'badge-paid' : 'badge-unpaid'}">${o.isPaid ? 'Paid' : 'Unpaid'}</span>
+                </td>
+              </tr>
+            </table>
+
+            <div class="section-title">Items Description</div>
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>Item Details</th>
+                  <th style="text-align: center;">Qty</th>
+                  <th style="text-align: right;">Unit Price</th>
+                  <th style="text-align: right;">Subtotal</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsHtml}
+              </tbody>
+            </table>
+
+            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 20px 0;" />
+
+            <table class="total-table">
+              <tr>
+                <td style="width: 70%; font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Subtotal:</td>
+                <td style="width: 30%; text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${(o.totalPrice - (o.taxPrice || 0) - (o.shippingPrice || 0)).toFixed(2)}</td>
+              </tr>
+              ${o.taxPrice ? `
+              <tr>
+                <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Tax Amount:</td>
+                <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.taxPrice.toFixed(2)}</td>
+              </tr>` : ''}
+              ${o.shippingPrice ? `
+              <tr>
+                <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Shipping Fees:</td>
+                <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.shippingPrice.toFixed(2)}</td>
+              </tr>` : ''}
+              <tr>
+                <td style="font-size: 16px; color: #111; padding: 10px 0 0 0;">Total Amount Paid:</td>
+                <td style="text-align: right; font-size: 18px; color: #7c3aed; padding: 10px 0 0 0;">₹${o.totalPrice.toFixed(2)}</td>
+              </tr>
+            </table>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+              setTimeout(function() { window.close(); }, 500);
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
   };
 
   // Calculations
@@ -636,47 +777,125 @@ function AdminDashboard() {
       )}
 
       {activeTab === 'orders' && (
-        <div className="glass-panel border border-white/5 rounded-2xl p-6 space-y-4">
-          <h3 className="text-lg font-black uppercase text-white">ALL ORDERS</h3>
-          {ordersLoading ? (
-            <Loader2 className="w-8 h-8 text-violet-500 animate-spin mx-auto" />
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-sm">
-                <thead>
-                  <tr className="border-b border-white/5 text-zinc-500 font-extrabold uppercase text-xs">
-                    <th className="py-2.5">ATHLETE</th>
-                    <th className="py-2.5">TOTAL</th>
-                    <th className="py-2.5">PAID</th>
-                    <th className="py-2.5">STATUS</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-white/5 font-semibold text-zinc-300">
-                  {ordersData?.map((o: Order) => (
-                    <tr key={o._id} className="hover:bg-white/5">
-                      <td className="py-3 text-white">{o.user?.name || 'Athlete'}</td>
-                      <td className="py-3">₹{o.totalPrice.toFixed(2)}</td>
-                      <td className="py-3">{o.isPaid ? '🟢 YES' : '🔴 NO'}</td>
-                      <td className="py-3">
-                        <select
-                          value={o.status}
-                          onChange={(e) => updateOrderStatusMutation.mutate({ id: o._id, status: e.target.value })}
-                          className="px-2 py-1.5 bg-[#0b0b0f] border border-white/10 rounded-lg text-xs font-semibold focus:outline-none"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Confirmed">Confirmed</option>
-                          <option value="Packed">Packed</option>
-                          <option value="Shipped">Shipped</option>
-                          <option value="Delivered">Delivered</option>
-                          <option value="Cancelled">Cancelled</option>
-                        </select>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+        <div className="space-y-6">
+          <div className="glass-panel border border-white/5 rounded-2xl p-6 space-y-6">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-2 border-b border-white/5">
+              <h3 className="text-lg font-black uppercase text-white">ALL ORDERS</h3>
+              <div className="w-full sm:w-72">
+                <input
+                  type="text"
+                  placeholder="Search by customer, ID, status or city..."
+                  value={orderSearch}
+                  onChange={(e) => setOrderSearch(e.target.value)}
+                  className="w-full px-4 py-2.5 bg-[#0b0b0f] border border-white/10 text-white rounded-xl text-xs focus:outline-none focus:border-violet-500/50 placeholder:text-zinc-600"
+                />
+              </div>
             </div>
-          )}
+
+            {ordersLoading ? (
+              <Loader2 className="w-8 h-8 text-violet-500 animate-spin mx-auto" />
+            ) : (
+              (() => {
+                const filteredOrders = ordersData?.filter((o: any) => {
+                  const s = orderSearch.toLowerCase();
+                  return (
+                    o.user?.name?.toLowerCase().includes(s) ||
+                    o._id?.toLowerCase().includes(s) ||
+                    o.status?.toLowerCase().includes(s) ||
+                    o.shippingAddress?.address?.toLowerCase().includes(s) ||
+                    o.shippingAddress?.city?.toLowerCase().includes(s)
+                  );
+                }) || [];
+
+                if (filteredOrders.length === 0) {
+                  return (
+                    <p className="text-zinc-500 text-xs font-semibold text-center py-8">
+                      No orders match your search criteria.
+                    </p>
+                  );
+                }
+
+                return (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {filteredOrders.map((o: any) => (
+                      <div key={o._id} className="glass-panel border border-white/10 rounded-2xl p-6 flex flex-col justify-between space-y-4 hover:border-violet-500/30 transition-all">
+                        {/* Header info */}
+                        <div className="flex justify-between items-start gap-4">
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 block uppercase">Order ID</span>
+                            <span className="font-mono text-[11px] text-zinc-300 font-bold">{o._id}</span>
+                          </div>
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 block uppercase text-right">Date</span>
+                            <span className="text-xs text-zinc-300 font-semibold">{new Date(o.createdAt).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+
+                        {/* Customer details */}
+                        <div className="border-t border-b border-white/5 py-3 space-y-2">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500">ATHLETE</span>
+                            <span className="text-white font-bold">{o.user?.name || 'Athlete'}</span>
+                          </div>
+                          <div className="flex justify-between text-xs">
+                            <span className="text-zinc-500">PAYMENT</span>
+                            <span className="text-white font-semibold">{o.paymentMethod || 'Card'} ({o.isPaid ? '🟢 PAID' : '🔴 UNPAID'})</span>
+                          </div>
+                          <div className="text-xs space-y-1">
+                            <span className="text-zinc-500 block">SHIPPING ADDRESS</span>
+                            <span className="text-zinc-400 block font-medium leading-relaxed">
+                              {o.shippingAddress ? `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.postalCode}, ${o.shippingAddress.country}` : 'No address provided'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Order items */}
+                        <div className="space-y-1.5">
+                          <span className="text-[10px] font-bold text-zinc-500 block uppercase">Items Purchased</span>
+                          <div className="max-h-24 overflow-y-auto space-y-1 pr-1">
+                            {o.orderItems?.map((item: any, idx: number) => (
+                              <div key={idx} className="flex justify-between text-xs text-zinc-300 font-medium">
+                                <span>{item.qty}x {item.name} {item.size ? `(${item.size})` : ''}</span>
+                                <span>₹{(item.qty * item.price).toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div className="border-t border-white/5 pt-4 flex justify-between items-center gap-4">
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 block uppercase">Grand Total</span>
+                            <span className="text-lg font-black text-violet-400">₹{o.totalPrice.toFixed(2)}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handlePrintInvoice(o)}
+                              className="px-3 py-2 bg-violet-600/10 border border-violet-500/20 text-violet-400 rounded-lg text-[10px] font-black uppercase hover:bg-violet-600 hover:text-white transition-all tracking-wider cursor-pointer"
+                            >
+                              Print Bill
+                            </button>
+                            <select
+                              value={o.status}
+                              onChange={(e) => updateOrderStatusMutation.mutate({ id: o._id, status: e.target.value })}
+                              className="px-2.5 py-1.5 bg-[#0b0b0f] border border-white/10 rounded-lg text-xs font-semibold focus:outline-none cursor-pointer"
+                            >
+                              <option value="Pending">Pending</option>
+                              <option value="Confirmed">Confirmed</option>
+                              <option value="Packed">Packed</option>
+                              <option value="Shipped">Shipped</option>
+                              <option value="Delivered">Delivered</option>
+                              <option value="Cancelled">Cancelled</option>
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()
+            )}
+          </div>
         </div>
       )}
 
@@ -698,7 +917,14 @@ function AdminDashboard() {
                 <tbody className="divide-y divide-white/5 font-semibold text-zinc-300">
                   {usersData?.map((u: any) => (
                     <tr key={u._id} className="hover:bg-white/5">
-                      <td className="py-3 text-white">{u.name}</td>
+                      <td className="py-3 text-white">
+                        <button
+                          onClick={() => setSelectedUserId(u._id)}
+                          className="hover:text-violet-400 font-bold transition-colors text-left focus:outline-none cursor-pointer"
+                        >
+                          {u.name}
+                        </button>
+                      </td>
                       <td className="py-3 font-mono text-zinc-400 text-xs">{u.email}</td>
                       <td className="py-3">
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase ${
@@ -716,6 +942,138 @@ function AdminDashboard() {
             </div>
           )}
         </div>
+      )}
+
+      {/* User Details Modal */}
+      {selectedUserId && (
+        (() => {
+          const selectedUser = usersData?.find((u: any) => u._id === selectedUserId);
+          if (!selectedUser) return null;
+
+          const userOrders = ordersData?.filter((o: any) => {
+            if (!o.user) return false;
+            const oUserId = typeof o.user === 'object' ? o.user._id || o.user.id : o.user;
+            return oUserId === selectedUserId;
+          }) || [];
+
+          const uniqueAddresses = Array.from(
+            new Set(
+              userOrders
+                .filter((o: any) => o.shippingAddress)
+                .map((o: any) => 
+                  `${o.shippingAddress.address}, ${o.shippingAddress.city}, ${o.shippingAddress.postalCode}, ${o.shippingAddress.country}`
+                )
+            )
+          );
+
+          return (
+            <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="w-full max-w-2xl bg-[#0b0b0f] border border-white/10 rounded-2xl overflow-hidden shadow-2xl flex flex-col max-h-[85vh]">
+                {/* Header */}
+                <div className="px-6 py-4 border-b border-white/5 flex justify-between items-center bg-white/5">
+                  <div>
+                    <h3 className="text-sm font-black uppercase text-white tracking-wider">ATHLETE ACCOUNT DEEP-DIVE</h3>
+                    <p className="text-zinc-500 text-[10px] font-semibold uppercase tracking-wider mt-0.5">Profile & Order Audit for {selectedUser.name}</p>
+                  </div>
+                  <button 
+                    onClick={() => setSelectedUserId(null)}
+                    className="p-1.5 hover:bg-white/10 rounded-lg text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 overflow-y-auto space-y-6">
+                  {/* Account Overview */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest block">Full Name</span>
+                      <span className="text-xs font-bold text-white block mt-1">{selectedUser.name}</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest block">Email Address</span>
+                      <span className="text-xs font-bold text-violet-400 font-mono block mt-1 truncate">{selectedUser.email}</span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest block">System Role</span>
+                      <span className="text-[10px] font-black text-white mt-1 inline-block uppercase bg-violet-600/20 text-violet-400 border border-violet-500/20 px-2 py-0.5 rounded-full">
+                        {selectedUser.role}
+                      </span>
+                    </div>
+                    <div className="bg-white/5 p-4 rounded-xl border border-white/5">
+                      <span className="text-[10px] text-zinc-500 font-extrabold uppercase tracking-widest block">Registration Date</span>
+                      <span className="text-xs font-bold text-zinc-300 block mt-1">{new Date(selectedUser.createdAt).toLocaleDateString()}</span>
+                    </div>
+                  </div>
+
+                  {/* Delivery Addresses */}
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-black text-white uppercase tracking-wider">SAVED / SHIPPED ADDRESSES</h4>
+                    {uniqueAddresses.length === 0 ? (
+                      <p className="text-xs text-zinc-500 font-medium italic">No delivery addresses logged yet.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {uniqueAddresses.map((addr, idx) => (
+                          <div key={idx} className="bg-white/5 p-3 rounded-lg border border-white/5 text-xs text-zinc-300 font-medium leading-relaxed">
+                            📍 {addr}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Order History */}
+                  <div className="space-y-2">
+                    <h4 className="text-[10px] font-black text-white uppercase tracking-wider">ORDER TRANSACTION HISTORY ({userOrders.length})</h4>
+                    {userOrders.length === 0 ? (
+                      <p className="text-xs text-zinc-500 font-medium italic">No transactions recorded for this user.</p>
+                    ) : (
+                      <div className="overflow-x-auto border border-white/5 rounded-xl">
+                        <table className="w-full text-left border-collapse text-xs">
+                          <thead>
+                            <tr className="bg-white/5 text-zinc-500 font-bold uppercase border-b border-white/5">
+                              <th className="p-3">Order ID</th>
+                              <th className="p-3">Date</th>
+                              <th className="p-3">Total</th>
+                              <th className="p-3">Paid</th>
+                              <th className="p-3">Status</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-white/5 font-semibold text-zinc-300">
+                            {userOrders.map((o: any) => (
+                              <tr key={o._id} className="hover:bg-white/5">
+                                <td className="p-3 font-mono text-[10px] text-zinc-400">{o._id}</td>
+                                <td className="p-3">{new Date(o.createdAt).toLocaleDateString()}</td>
+                                <td className="p-3 text-violet-400">₹{o.totalPrice.toFixed(2)}</td>
+                                <td className="p-3">{o.isPaid ? '🟢 Paid' : '🔴 Unpaid'}</td>
+                                <td className="p-3">
+                                  <span className="bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded text-[10px] font-bold">
+                                    {o.status}
+                                  </span>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 border-t border-white/5 bg-white/5 flex justify-end">
+                  <button
+                    onClick={() => setSelectedUserId(null)}
+                    className="px-5 py-2.5 bg-white/5 border border-white/10 hover:bg-white/10 text-white rounded-xl text-xs font-bold transition-all uppercase cursor-pointer"
+                  >
+                    Close Profile
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })()
       )}
     </div>
   );
