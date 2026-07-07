@@ -62,21 +62,7 @@ function AdminDashboard() {
   const [orderSearch, setOrderSearch] = useState('');
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  // Verify Role
-  if (!isAuthenticated || user?.role !== 'admin') {
-    return (
-      <div className="text-center py-40 space-y-4">
-        <h2 className="text-3xl font-black text-red-500 uppercase">ACCESS DENIED</h2>
-        <p className="text-zinc-400 text-sm">You must be logged in as an administrator to view this page.</p>
-        <button
-          onClick={() => navigate({ to: '/admin/login' })}
-          className="px-6 py-2.5 bg-violet-600 font-bold text-xs rounded-xl"
-        >
-          GO TO LOGIN
-        </button>
-      </div>
-    );
-  }
+  const isAdmin = isAuthenticated && user?.role === 'admin';
 
   // Fetch all products
   const { data: productsData, isLoading: productsLoading } = useQuery({
@@ -85,6 +71,7 @@ function AdminDashboard() {
       const res = await api.get('/products?limit=100');
       return res.data.products;
     },
+    enabled: isAdmin,
   });
 
   // Fetch all orders
@@ -94,6 +81,7 @@ function AdminDashboard() {
       const res = await api.get('/orders');
       return res.data;
     },
+    enabled: isAdmin,
   });
 
   // Fetch all users
@@ -103,6 +91,7 @@ function AdminDashboard() {
       const res = await api.get('/users');
       return res.data;
     },
+    enabled: isAdmin,
   });
 
   // Product mutation handlers

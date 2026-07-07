@@ -2,6 +2,8 @@ import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, verifyRefreshToken, generateAccessToken } from '../utils/jwt';
 import { User } from '../models/User';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export interface AuthRequest extends Request {
   user?: any;
 }
@@ -30,8 +32,8 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
           // Set new access token cookie
           res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             maxAge: 15 * 60 * 1000, // 15 mins
           });
 
@@ -64,8 +66,8 @@ export const protect = async (req: AuthRequest, res: Response, next: NextFunctio
           const newAccessToken = generateAccessToken(user._id.toString(), user.role);
           res.cookie('accessToken', newAccessToken, {
             httpOnly: true,
-            secure: true,
-            sameSite: 'none',
+            secure: isProduction,
+            sameSite: isProduction ? 'none' : 'lax',
             maxAge: 15 * 60 * 1000,
           });
           req.user = user;

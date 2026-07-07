@@ -5,11 +5,13 @@ import { generateAccessToken, generateRefreshToken } from '../utils/jwt';
 import { sendEmail } from '../utils/mailer';
 import { AuthRequest } from '../middlewares/auth';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const setTokenCookies = (res: Response, accessToken: string, refreshToken: string, rememberMe = false) => {
   res.cookie('accessToken', accessToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: 15 * 60 * 1000, // 15 mins
   });
 
@@ -19,8 +21,8 @@ const setTokenCookies = (res: Response, accessToken: string, refreshToken: strin
 
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: true,
-    sameSite: 'none',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     maxAge: refreshAge,
   });
 };
