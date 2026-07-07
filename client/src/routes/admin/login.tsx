@@ -37,6 +37,7 @@ function AdminLogin() {
         return;
       }
 
+      if (user.accessToken) localStorage.setItem('accessToken', user.accessToken);
       dispatch(loginSuccess(user));
       navigate({ to: '/admin/dashboard' });
     } catch (err: any) {

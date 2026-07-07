@@ -17,11 +17,13 @@ export default function Navbar() {
   const handleLogout = async () => {
     try {
       await api.post('/auth/logout');
+      localStorage.removeItem('accessToken');
       dispatch(logoutSuccess());
       dispatch(clearCart());
       navigate({ to: '/logged-out' });
     } catch (error) {
       console.error('Logout error:', error);
+      localStorage.removeItem('accessToken');
       dispatch(logoutSuccess());
       dispatch(clearCart());
       navigate({ to: '/logged-out' });

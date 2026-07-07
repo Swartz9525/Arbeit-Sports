@@ -28,6 +28,7 @@ function Register() {
 
     try {
       const res = await api.post('/auth/register', { name, email, password });
+      if (res.data.accessToken) localStorage.setItem('accessToken', res.data.accessToken);
       dispatch(loginSuccess(res.data));
       navigate({ to: '/' });
     } catch (err: any) {

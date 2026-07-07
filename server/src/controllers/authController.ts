@@ -84,6 +84,7 @@ export const registerUser = async (req: Request, res: Response) => {
       role: user.role,
       avatar: user.avatar,
       isVerified: user.isVerified,
+      accessToken,
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });
@@ -117,6 +118,7 @@ export const loginUser = async (req: Request, res: Response) => {
       role: user.role,
       avatar: user.avatar,
       isVerified: user.isVerified,
+      accessToken,
     });
   } catch (error: any) {
     res.status(500).json({ message: error.message });

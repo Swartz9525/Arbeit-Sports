@@ -27,6 +27,7 @@ function Login() {
 
     try {
       const res = await api.post('/auth/login', { email, password });
+      if (res.data.accessToken) localStorage.setItem('accessToken', res.data.accessToken);
       dispatch(loginSuccess(res.data));
       if (res.data.role === 'admin') {
         navigate({ to: '/admin/dashboard' });
