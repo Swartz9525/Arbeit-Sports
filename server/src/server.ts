@@ -35,7 +35,9 @@ const sanitizedOrigin = frontendUrl.endsWith('/') ? frontendUrl.slice(0, -1) : f
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
-  'https://arbeit-sports.vercel.app'
+  'https://arbeit-sports.vercel.app',
+  'https://www.arbeitsports.in',
+  'https://arbeitsports.in'
 ];
 if (!allowedOrigins.includes(sanitizedOrigin)) {
   allowedOrigins.push(sanitizedOrigin);
