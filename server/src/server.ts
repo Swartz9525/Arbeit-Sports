@@ -24,6 +24,9 @@ import { User } from './models/User';
 
 const app = express();
 
+// Trust proxy for rate limiting behind reverse proxies (Vercel)
+app.set('trust proxy', 1);
+
 // Middlewares
 app.use(helmet({
   contentSecurityPolicy: false, // For ease of loading external models/images in dev
