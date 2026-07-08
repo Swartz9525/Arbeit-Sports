@@ -202,14 +202,7 @@ function AdminDashboard() {
     link.click();
     document.body.removeChild(link);
   };
-
   const handlePrintInvoice = (o: any) => {
-    const printWindow = window.open('', '_blank');
-    if (!printWindow) {
-      alert('Pop-up blocker is active. Please allow pop-ups to print the bill.');
-      return;
-    }
-
     const itemsHtml = o.orderItems.map((item: any) => `
       <tr>
         <td style="padding: 10px; border-bottom: 1px solid #ddd;">${item.name} ${item.size ? `(${item.size})` : ''}</td>
@@ -219,121 +212,107 @@ function AdminDashboard() {
       </tr>
     `).join('');
 
-    printWindow.document.write(`
-      <html>
-        <head>
-          <title>Invoice - ${o._id}</title>
-          <style>
-            body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; margin: 40px; line-height: 1.6; }
-            .invoice-box { max-width: 800px; margin: auto; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); border-radius: 8px; }
-            .header-table { width: 100%; margin-bottom: 30px; }
-            .header-table td { vertical-align: top; }
-            .title { font-size: 28px; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: -1px; }
-            .section-title { font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
-            .details-table { width: 100%; margin-bottom: 30px; }
-            .details-table td { width: 50%; vertical-align: top; }
-            .items-table { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
-            .items-table th { background: #f9fafb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase; }
-            .total-table { width: 100%; text-align: right; font-weight: bold; font-size: 15px; margin-top: 20px; }
-            .badge { display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; }
-            .badge-paid { color: #065f46; background: #d1fae5; }
-            .badge-unpaid { color: #991b1b; background: #fee2e2; }
-          </style>
-        </head>
-        <body>
-          <div class="invoice-box">
-            <table class="header-table">
-              <tr>
-                <td>
-                  <div class="title">ARBEIT SPORTS</div>
-                  <small>Performance & Style Lab</small>
-                </td>
-                <td style="text-align: right; font-size: 13px;">
-                  <strong>INVOICE RECEIPT</strong><br />
-                  Order ID: ${o._id}<br />
-                  Date: ${new Date(o.createdAt).toLocaleDateString()}<br />
-                </td>
-              </tr>
-            </table>
+    const invoiceElement = document.createElement('div');
+    invoiceElement.innerHTML = `
+      <div class="invoice-box" style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #333; padding: 30px; border: 1px solid #eee; box-shadow: 0 0 10px rgba(0, 0, 0, 0.05); border-radius: 8px; max-width: 800px; margin: auto; background: #fff;">
+        <table style="width: 100%; margin-bottom: 30px;">
+          <tr>
+            <td>
+              <div style="font-size: 28px; font-weight: 800; color: #7c3aed; text-transform: uppercase; letter-spacing: -1px;">ARBEIT SPORTS</div>
+              <small>Performance & Style Lab</small>
+            </td>
+            <td style="text-align: right; font-size: 13px;">
+              <strong>INVOICE RECEIPT</strong><br />
+              Order ID: ${o._id}<br />
+              Date: ${new Date(o.createdAt).toLocaleDateString()}<br />
+            </td>
+          </tr>
+        </table>
 
-            <table class="details-table">
-              <tr>
-                <td>
-                  <div class="section-title">Shopkeeper / Seller</div>
-                  <strong>Arbeit Sports Retail Ltd.</strong><br />
-                  100 Athletic Boulevard, Suite 500<br />
-                  New Delhi, Delhi 110001<br />
-                  Email: billing@arbeitsports.com<br />
-                  GSTIN: 07AAACA1111A1Z1
-                </td>
-                <td>
-                  <div class="section-title">Customer Shipping Address</div>
-                  <strong>${o.user?.name || 'Customer'}</strong><br />
-                  Address: ${o.shippingAddress?.address}<br />
-                  City: ${o.shippingAddress?.city}, Pin: ${o.shippingAddress?.postalCode}<br />
-                  Country: ${o.shippingAddress?.country}
-                </td>
-              </tr>
-            </table>
+        <table style="width: 100%; margin-bottom: 30px;">
+          <tr>
+            <td style="width: 50%; vertical-align: top;">
+              <div style="font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;">Shopkeeper / Seller</div>
+              <strong>Arbeit Sports Retail Ltd.</strong><br />
+              100 Athletic Boulevard, Suite 500<br />
+              New Delhi, Delhi 110001<br />
+              Email: billing@arbeitsports.com<br />
+              GSTIN: 07AAACA1111A1Z1
+            </td>
+            <td style="width: 50%; vertical-align: top; padding-left: 20px;">
+              <div style="font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;">Customer Shipping Address</div>
+              <strong>${o.user?.name || 'Customer'}</strong><br />
+              Address: ${o.shippingAddress?.address}<br />
+              City: ${o.shippingAddress?.city}, Pin: ${o.shippingAddress?.postalCode}<br />
+              Country: ${o.shippingAddress?.country}
+            </td>
+          </tr>
+        </table>
 
-            <table class="details-table" style="margin-bottom: 20px;">
-              <tr>
-                <td>
-                  <div class="section-title">Payment Information</div>
-                  Method: ${o.paymentMethod || 'Card'}<br />
-                  Status: <span class="badge ${o.isPaid ? 'badge-paid' : 'badge-unpaid'}">${o.isPaid ? 'Paid' : 'Unpaid'}</span>
-                </td>
-              </tr>
-            </table>
+        <table style="width: 100%; margin-bottom: 20px;">
+          <tr>
+            <td>
+              <div style="font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;">Payment Information</div>
+              Method: ${o.paymentMethod || 'Card'}<br />
+              Status: <span style="display: inline-block; padding: 4px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; text-transform: uppercase; ${o.isPaid ? 'color: #065f46; background: #d1fae5;' : 'color: #991b1b; background: #fee2e2;'}">${o.isPaid ? 'Paid' : 'Unpaid'}</span>
+            </td>
+          </tr>
+        </table>
 
-            <div class="section-title">Items Description</div>
-            <table class="items-table">
-              <thead>
-                <tr>
-                  <th>Item Details</th>
-                  <th style="text-align: center;">Qty</th>
-                  <th style="text-align: right;">Unit Price</th>
-                  <th style="text-align: right;">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${itemsHtml}
-              </tbody>
-            </table>
+        <div style="font-size: 13px; font-weight: 800; color: #666; text-transform: uppercase; margin-bottom: 10px; border-bottom: 2px solid #eee; padding-bottom: 5px;">Items Description</div>
+        <table style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+          <thead>
+            <tr>
+              <th style="background: #f9fafb; padding: 10px; text-align: left; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase;">Item Details</th>
+              <th style="background: #f9fafb; padding: 10px; text-align: center; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase; width: 60px;">Qty</th>
+              <th style="background: #f9fafb; padding: 10px; text-align: right; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase; width: 100px;">Unit Price</th>
+              <th style="background: #f9fafb; padding: 10px; text-align: right; font-size: 12px; font-weight: bold; border-bottom: 2px solid #ddd; text-transform: uppercase; width: 120px;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${itemsHtml}
+          </tbody>
+        </table>
 
-            <hr style="border: 0; border-top: 1px dashed #ddd; margin: 20px 0;" />
+        <hr style="border: 0; border-top: 1px dashed #ddd; margin: 20px 0;" />
 
-            <table class="total-table">
-              <tr>
-                <td style="width: 70%; font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Subtotal:</td>
-                <td style="width: 30%; text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${(o.totalPrice - (o.taxPrice || 0) - (o.shippingPrice || 0)).toFixed(2)}</td>
-              </tr>
-              ${o.taxPrice ? `
-              <tr>
-                <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Tax Amount:</td>
-                <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.taxPrice.toFixed(2)}</td>
-              </tr>` : ''}
-              ${o.shippingPrice ? `
-              <tr>
-                <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Shipping Fees:</td>
-                <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.shippingPrice.toFixed(2)}</td>
-              </tr>` : ''}
-              <tr>
-                <td style="font-size: 16px; color: #111; padding: 10px 0 0 0;">Total Amount Paid:</td>
-                <td style="text-align: right; font-size: 18px; color: #7c3aed; padding: 10px 0 0 0;">₹${o.totalPrice.toFixed(2)}</td>
-              </tr>
-            </table>
-          </div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(function() { window.close(); }, 500);
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    printWindow.document.close();
+        <table style="width: 100%; text-align: right; font-weight: bold; font-size: 15px; margin-top: 20px;">
+          <tr>
+            <td style="width: 70%; font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Subtotal:</td>
+            <td style="width: 30%; text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${(o.totalPrice - (o.taxPrice || 0) - (o.shippingPrice || 0)).toFixed(2)}</td>
+          </tr>
+          ${o.taxPrice ? `
+          <tr>
+            <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Tax Amount:</td>
+            <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.taxPrice.toFixed(2)}</td>
+          </tr>` : ''}
+          ${o.shippingPrice ? `
+          <tr>
+            <td style="font-size: 13px; color: #666; font-weight: normal; padding: 4px 0;">Shipping Fees:</td>
+            <td style="text-align: right; font-size: 14px; font-weight: normal; padding: 4px 0;">₹${o.shippingPrice.toFixed(2)}</td>
+          </tr>` : ''}
+          <tr>
+            <td style="font-size: 16px; color: #111; padding: 10px 0 0 0;">Total Amount Paid:</td>
+            <td style="text-align: right; font-size: 18px; color: #7c3aed; padding: 10px 0 0 0;">₹${o.totalPrice.toFixed(2)}</td>
+          </tr>
+        </table>
+      </div>
+    `;
+
+    import('html2pdf.js').then((html2pdfModule) => {
+      const html2pdf = html2pdfModule.default;
+      const opt = {
+        margin:       10,
+        filename:     `Invoice_${o._id}.pdf`,
+        image:        { type: 'jpeg', quality: 0.98 },
+        html2canvas:  { scale: 2, useCORS: true },
+        jsPDF:        { unit: 'mm', format: 'a4', orientation: 'portrait' }
+      };
+      html2pdf().from(invoiceElement).set(opt).save();
+    }).catch((err) => {
+      console.error('Failed to load html2pdf.js', err);
+      alert('Failed to generate PDF. Please try again.');
+    });
   };
 
   // Calculations
@@ -862,7 +841,7 @@ function AdminDashboard() {
                               onClick={() => handlePrintInvoice(o)}
                               className="px-3 py-2 bg-violet-600/10 border border-violet-500/20 text-violet-400 rounded-lg text-[10px] font-black uppercase hover:bg-violet-600 hover:text-white transition-all tracking-wider cursor-pointer"
                             >
-                              Print Bill
+                              Download Invoice
                             </button>
                             <select
                               value={o.status}
